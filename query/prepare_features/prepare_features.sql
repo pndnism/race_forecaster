@@ -7,7 +7,7 @@ CREATE TEMP FUNCTION
 #   parse_arrival_orders(arrival_orders string) as 
 #     ();
 
-#create or replace table horse_race_processed.race_features as 
+create or replace table horse_race_processed.race_features as
 with 
     race_info as (
         SELECT
@@ -112,6 +112,8 @@ with
             held_place,
             weather,
             jockey_names,
+            trainer_names,
+            horse_owners,
             course_type,
             course_condition,
             course_direction,
@@ -229,11 +231,11 @@ with
             horse_id,
             weather,
             held_date,
-            AVG(goal_times) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS previous_1_goal_times_avgs,
-            AVG(half_times) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS previous_1_half_times_avgs,
-            AVG(avg_velocity) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS previous_1_avg_velocity_avgs,
-            AVG(avg_half_velocity) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS previous_1_avg_half_velocity_avgs,
-            AVG(arrival_orders) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS previous_1_arrival_orders_avgs,
+            AVG(goal_times) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS same_weather_previous_1_goal_times_avgs,
+            AVG(half_times) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS same_weather_previous_1_half_times_avgs,
+            AVG(avg_velocity) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS same_weather_previous_1_avg_velocity_avgs,
+            AVG(avg_half_velocity) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS same_weather_previous_1_avg_half_velocity_avgs,
+            AVG(arrival_orders) OVER (partition by horse_id, weather ORDER BY held_date ASC ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) AS same_weather_previous_1_arrival_orders_avgs,
         from base_features
         order by horse_id desc, weather desc, held_date desc
     ),
@@ -608,34 +610,33 @@ select * from base_features
 left join previous_1_races_avgs using (race_id, horse_id, held_date)
 left join previous_3_races_avgs using (race_id, horse_id, held_date)
 left join previous_5_races_avgs using (race_id, horse_id, held_date)
-left join previous_1_same_place_races_avgs using (race_id, horse_id, held_date, held_place)
-left join previous_same_place_3_races_avgs using (race_id, horse_id, held_date, held_place)
-left join previous_same_place_5_races_avgs using (race_id, horse_id, held_date, held_place)
-left join previous_1_same_weather_races_avgs using (race_id, horse_id, held_date, weather)
-left join previous_same_weather_3_races_avgs using (race_id, horse_id, held_date, weather)
-left join previous_same_weather_5_races_avgs using (race_id, horse_id, held_date, weather)
-left join previous_1_same_jockey_races_avgs using (race_id, horse_id, held_date, jockey_names)
-left join previous_same_jockey_3_races_avgs using (race_id, horse_id, held_date, jockey_names)
-left join previous_same_jockey_5_races_avgs using (race_id, horse_id, held_date, jockey_names)
-left join previous_1_same_course_type_races_avgs using (race_id, horse_id, held_date, course_type)
-left join previous_3_same_course_type_races_avgs using (race_id, horse_id, held_date, course_type)
-left join previous_5_same_course_type_races_avgs using (race_id, horse_id, held_date, course_type)
-left join previous_1_same_course_condition_races_avgs using (race_id, horse_id, held_date, course_condition)
-left join previous_3_same_course_condition_races_avgs using (race_id, horse_id, held_date, course_condition)
-left join previous_5_same_course_condition_races_avgs using (race_id, horse_id, held_date, course_condition)
-left join previous_1_same_course_direction_races_avgs using (race_id, horse_id, held_date, course_direction)
-left join previous_3_same_course_direction_races_avgs using (race_id, horse_id, held_date, course_direction)
-left join previous_5_same_course_direction_races_avgs using (race_id, horse_id, held_date, course_direction)
-left join previous_1_same_race_number_races_avgs using (race_id, horse_id, held_date)
-left join previous_3_same_race_number_races_avgs using (race_id, horse_id, held_date)
-left join previous_5_same_race_number_races_avgs using (race_id, horse_id, held_date)
-left join previous_1_same_course_length_category_races_avgs using (race_id, horse_id, held_date)
-left join previous_3_same_course_length_category_races_avgs using (race_id, horse_id, held_date)
-left join previous_5_same_course_length_category_races_avgs using (race_id, horse_id, held_date)
-left join previous_1_same_held_month_races_avgs using (race_id, horse_id, held_date)
-left join previous_3_same_held_month_races_avgs using (race_id, horse_id, held_date)
-left join previous_5_same_held_month_races_avgs using (race_id, horse_id, held_date)
-left join previous_1_same_held_day_of_week_races_avgs using (race_id, horse_id, held_date)
-left join previous_3_same_held_day_of_week_races_avgs using (race_id, horse_id, held_date)
-left join previous_5_same_held_day_of_week_races_avgs using (race_id, horse_id, held_date)
-LIMIT 100
+left join previous_1_same_place_races_avgs using (race_id, horse_id, held_place, held_date)
+left join previous_same_place_3_races_avgs using (race_id, horse_id, held_place, held_date)
+left join previous_same_place_5_races_avgs using (race_id, horse_id, held_place, held_date)
+left join previous_1_same_weather_races_avgs using (race_id, horse_id, weather, held_date)
+left join previous_same_weather_3_races_avgs using (race_id, horse_id, weather, held_date)
+left join previous_same_weather_5_races_avgs using (race_id, horse_id, weather, held_date)
+left join previous_1_same_jockey_races_avgs using (race_id, horse_id, jockey_names, held_date)
+left join previous_same_jockey_3_races_avgs using (race_id, horse_id, jockey_names, held_date)
+left join previous_same_jockey_5_races_avgs using (race_id, horse_id, jockey_names, held_date)
+left join previous_1_same_course_type_races_avgs using (race_id, horse_id, course_type, held_date)
+left join previous_3_same_course_type_races_avgs using (race_id, horse_id, course_type, held_date)
+left join previous_5_same_course_type_races_avgs using (race_id, horse_id, course_type, held_date)
+left join previous_1_same_course_condition_races_avgs using (race_id, horse_id, course_condition, held_date)
+left join previous_3_same_course_condition_races_avgs using (race_id, horse_id, course_condition, held_date)
+left join previous_5_same_course_condition_races_avgs using (race_id, horse_id, course_condition, held_date)
+left join previous_1_same_course_direction_races_avgs using (race_id, horse_id, course_direction, held_date)
+left join previous_3_same_course_direction_races_avgs using (race_id, horse_id, course_direction, held_date)
+left join previous_5_same_course_direction_races_avgs using (race_id, horse_id, course_direction, held_date)
+left join previous_1_same_race_number_races_avgs using (race_id, horse_id, race_number, held_date)
+left join previous_3_same_race_number_races_avgs using (race_id, horse_id, race_number, held_date)
+left join previous_5_same_race_number_races_avgs using (race_id, horse_id, race_number, held_date)
+left join previous_1_same_course_length_category_races_avgs using (race_id, horse_id, course_length_category, held_date)
+left join previous_3_same_course_length_category_races_avgs using (race_id, horse_id, course_length_category, held_date)
+left join previous_5_same_course_length_category_races_avgs using (race_id, horse_id, course_length_category, held_date)
+left join previous_1_same_held_month_races_avgs using (race_id, horse_id, held_month, held_date)
+left join previous_3_same_held_month_races_avgs using (race_id, horse_id, held_month, held_date)
+left join previous_5_same_held_month_races_avgs using (race_id, horse_id, held_month, held_date)
+left join previous_1_same_held_day_of_week_races_avgs using (race_id, horse_id, held_day_of_week, held_date)
+left join previous_3_same_held_day_of_week_races_avgs using (race_id, horse_id, held_day_of_week, held_date)
+left join previous_5_same_held_day_of_week_races_avgs using (race_id, horse_id, held_day_of_week, held_date)
